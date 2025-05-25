@@ -3,12 +3,12 @@ import { config } from 'dotenv';
 import OpenAI from 'openai';
 import cors from 'cors';
 
-config();
+config(); // טוען את מפתח ה־API מתוך .env
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); // 👈 הכרחי כדי שהאתר יוכל לשלוח בקשות
+app.use(cors()); // מאפשר לפנות מהאתר שלך
 app.use(express.json());
 
 const openai = new OpenAI({
@@ -32,5 +32,5 @@ app.post('/chat', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`✅ Server is running on port ${port}`);
 });
