@@ -1,47 +1,33 @@
+// server.js (גרסה חדשה שמתחברת ל־willy-brain.js)
 import express from 'express';
 import { config } from 'dotenv';
-import OpenAI from 'openai';
 import cors from 'cors';
-import fs from 'fs/promises'; // כדי לקרוא את ה־system prompt
+import { getWillyResponse } from './willy-brain.js';
 
-config(); // טוען את מפתח ה־API מתוך .env
+config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); // מאפשר פנייה מהדפדפן
+app.use(cors());
 app.use(express.json());
 
-// הגדרת OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// צ'אט API
+// צ'אט API – כל הודעה מנותבת למוח של ווילי
 app.post('/chat', async (req, res) => {
   try {
+    const userId = req.body.userId || req.ip; // מזהה לפי IP או מזהה לקוח עתידי
     const userMessage = req.body.message;
 
-    // קריאה לתוכן של ווילי מתוך קובץ
-    const systemPrompt = await fs.readFile('./willy-systemPrompt.txt', 'utf-8');
+    const response = await getWillyResponse(userId, userMessage);
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // אפשר גם gpt-3.5-turbo
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      temperature: 0.9,
-    });
-
-    res.json({ response: completion.choices[0].message.content });
+    res.json({ response });
   } catch (error) {
-    console.error('❌ Error:', error);
-    res.status(500).json({ error: 'Something went wrong.' });
+    console.error('❌ Error in /chat:', error);
+    res.status(500).json({ error: 'Something went wrong on the server.' });
   }
 });
 
-// 🟢 מסלול ברירת מחדל – כדי ש־Render ו־UptimeRobot יקבלו תשובה
+// ברירת מחדל – לבדיקה מרנדר או מבחוץ
 app.get('/', (req, res) => {
   res.send('✅ Willy server is up and running!');
 });
