@@ -1,3 +1,4 @@
+// server.js – with memory via chatHistory
 import express from 'express';
 import { config } from 'dotenv';
 import cors from 'cors';
@@ -17,14 +18,18 @@ app.use(express.json());
 app.post('/chat', async (req, res) => {
   try {
     const userMessage = req.body.message;
+    const chatHistory = req.body.history || []; // array of { role, content }
     const systemPrompt = await fs.readFile('./willy-systemPrompt.txt', 'utf-8');
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...chatHistory,
+      { role: 'user', content: userMessage }
+    ];
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
-      ],
+      messages,
       temperature: 0.9
     });
 
